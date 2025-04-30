@@ -61,13 +61,23 @@ resource "aws_instance" "nginx_server" {
 
   user_data = <<-EOF
               #!/bin/bash
-              yum update -y
-              amazon-linux-extras install nginx1 -y
-              systemctl enable nginx
-              systemctl start nginx
+              sudo yum update -y
+              sudo amazon-linux-extras install docker -y
+              sudo systemctl start docker
+              sudo systemctl enable docker
+              sudo usermod -aG docker ec2-user  # So you can run docker without sudo (after relogin)
+              docker run -d -p 80:80 --name webserver nginx
+
+
               EOF
 
   tags = {
     Name = "Terraform-Nginx-EC2"
   }
 }
+
+output "instance_public_ip" {
+  description = "Public IP of the instance"
+  value       = aws_instance.nginx_server.public_ip
+}
+
