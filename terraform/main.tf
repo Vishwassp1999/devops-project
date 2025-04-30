@@ -2,7 +2,7 @@ provider "aws" {
   region = "ap-south-1"
 }
 
-# Lookup latest Amazon Linux 2 AMI
+# Get latest Amazon Linux 2 AMI
 data "aws_ami" "amazon_linux" {
   most_recent = true
 
@@ -16,7 +16,7 @@ data "aws_ami" "amazon_linux" {
     values = ["hvm"]
   }
 
-  owners = ["137112412989"] # Amazon
+  owners = ["137112412989"]
 }
 
 # Get default VPC
@@ -24,22 +24,16 @@ data "aws_vpc" "default" {
   default = true
 }
 
-# Get default subnet in specific AZ
-data "aws_subnet" "default" {
-  filter {
-    name   = "vpc-id"
-    values = [data.aws_vpc.default.id]
-  }
-
-  filter {
-    name   = "default-for-az"
-    values = ["true"]
-  }
-
-  availability_zone = "ap-south-1a"
+# Get any default subnet in that default VPC
+data "aws_subnet_ids" "default" {
+  vpc_id = data.aws_vpc.default.id
 }
 
-# Create security group allowing SSH and HTTP
+data "aws_subnet" "default" {
+  id = data.aws_subnet_ids.default.ids[0]
+}
+
+# Create security group
 resource "aws_security_group" "mysec" {
   name        = "mysec"
   description = "Allow SSH and HTTP"
@@ -71,12 +65,12 @@ resource "aws_security_group" "mysec" {
   }
 }
 
-# Launch EC2 instance
+# Launch EC2
 resource "aws_instance" "myvm" {
-  ami                    = data.aws_ami.amazon_linux.id
-  instance_type          = "t2.micro"
-  subnet_id              = data.aws_subnet.default.id
-  vpc_security_group_ids = [aws_security_group.mysec.id]
+  ami                         = data.aws_ami.amazon_linux.id
+  instance_type               = "t2.micro"
+  subnet_id                   = data.aws_subnet.default.id
+  vpc_security_group_ids      = [aws_security_group.mysec.id]
 
   tags = {
     Name = "Jenkins-Terraform-EC2"
