@@ -1,15 +1,22 @@
 provider "aws" {
-  region = "ap-south-1" # Change if needed
+  region = "ap-south-1"
 }
 
-# Use latest Amazon Linux 2 AMI
+# Lookup latest Amazon Linux 2 AMI
 data "aws_ami" "amazon_linux" {
   most_recent = true
-  owners      = ["amazon"]
+
   filter {
     name   = "name"
     values = ["amzn2-ami-hvm-*-x86_64-gp2"]
   }
+
+  filter {
+    name   = "virtualization-type"
+    values = ["hvm"]
+  }
+
+  owners = ["137112412989"] # Amazon
 }
 
 # Get default VPC
@@ -17,20 +24,37 @@ data "aws_vpc" "default" {
   default = true
 }
 
-# Get a default subnet in that VPC
-data "aws_subnet_ids" "default" {
-  vpc_id = data.aws_vpc.default.id
+# Get default subnet in specific AZ
+data "aws_subnet" "default" {
+  filter {
+    name   = "vpc-id"
+    values = [data.aws_vpc.default.id]
+  }
+
+  filter {
+    name   = "default-for-az"
+    values = ["true"]
+  }
+
+  availability_zone = "ap-south-1a"
 }
 
-# Create a simple security group
+# Create security group allowing SSH and HTTP
 resource "aws_security_group" "mysec" {
   name        = "mysec"
-  description = "Allow SSH"
+  description = "Allow SSH and HTTP"
   vpc_id      = data.aws_vpc.default.id
 
   ingress {
     from_port   = 22
     to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    from_port   = 80
+    to_port     = 80
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
@@ -41,14 +65,19 @@ resource "aws_security_group" "mysec" {
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
   }
+
+  tags = {
+    Name = "Allow-SSH-HTTP"
+  }
 }
 
 # Launch EC2 instance
 resource "aws_instance" "myvm" {
   ami                    = data.aws_ami.amazon_linux.id
   instance_type          = "t2.micro"
-  subnet_id              = data.aws_subnet_ids.default.ids[0]
+  subnet_id              = data.aws_subnet.default.id
   vpc_security_group_ids = [aws_security_group.mysec.id]
+
   tags = {
     Name = "Jenkins-Terraform-EC2"
   }
