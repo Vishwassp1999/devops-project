@@ -3,7 +3,7 @@ provider "aws" {
 }
 
 resource "aws_instance" "myvm" {
-  ami           = "ami-0c55b159cbfafe1f0"  # Amazon Linux 2 (ap-south-1)
+  ami           = "ami-0f5ee92e2d63afc18"  # Amazon Linux 2 (ap-south-1)
   instance_type = "t2.micro"
   key_name      = "terraform-key"  # Replace with an existing EC2 key pair
 
