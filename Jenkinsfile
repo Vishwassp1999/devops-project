@@ -8,7 +8,7 @@ pipeline {
   stages {
     stage('Terraform Init & Apply') {
       environment {
-        AWS_CREDS = credentials('aws-creds')  // ID of your stored Username/Password
+        AWS_CREDS = credentials('aws-creds')  // ID of Jenkins credentials
       }
       steps {
         sh '''
