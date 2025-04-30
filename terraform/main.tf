@@ -2,9 +2,10 @@ provider "aws" {
   region = "ap-south-1"
 }
 
-# Get the latest Amazon Linux 2 AMI
+# Use the latest Amazon Linux 2 AMI
 data "aws_ami" "amazon_linux" {
   most_recent = true
+  owners      = ["amazon"]
 
   filter {
     name   = "name"
@@ -15,33 +16,18 @@ data "aws_ami" "amazon_linux" {
     name   = "virtualization-type"
     values = ["hvm"]
   }
-
-  owners = ["137112412989"]
 }
 
-# Get default VPC
-data "aws_vpc" "default" {
-  default = true
+# Replace this with a valid subnet ID from your AWS account in ap-south-1
+variable "subnet_id" {
+  default = "subnet-04d352eb15fe690c9" # <-- Replace with actual subnet ID
 }
 
-# Get list of subnets in default VPC
-data "aws_subnets" "default" {
-  filter {
-    name   = "vpc-id"
-    values = [data.aws_vpc.default.id]
-  }
-}
-
-# Use first subnet
-data "aws_subnet" "default" {
-  id = data.aws_subnets.default.ids[0]
-}
-
-# Security group to allow SSH and HTTP
-resource "aws_security_group" "mysec" {
-  name        = "mysec"
-  description = "Allow SSH and HTTP"
-  vpc_id      = data.aws_vpc.default.id
+# Security group
+resource "aws_security_group" "nginx_sg" {
+  name        = "nginx-allow-http-ssh"
+  description = "Allow HTTP and SSH"
+  vpc_id      = "vpc-0782413ddc469e41c" # Optional: Only needed if not default VPC
 
   ingress {
     from_port   = 22
@@ -63,20 +49,25 @@ resource "aws_security_group" "mysec" {
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
   }
-
-  tags = {
-    Name = "Allow-SSH-HTTP"
-  }
 }
 
-# Launch EC2 instance
-resource "aws_instance" "myvm" {
+# EC2 Instance with nginx installed via user_data
+resource "aws_instance" "nginx_server" {
   ami                    = data.aws_ami.amazon_linux.id
   instance_type          = "t2.micro"
-  subnet_id              = data.aws_subnet.default.id
-  vpc_security_group_ids = [aws_security_group.mysec.id]
+  subnet_id              = var.subnet_id
+  vpc_security_group_ids = [aws_security_group.nginx_sg.id]
+  key_name               = "terraform-key"  # Replace with actual key pair name
+
+  user_data = <<-EOF
+              #!/bin/bash
+              yum update -y
+              amazon-linux-extras install nginx1 -y
+              systemctl enable nginx
+              systemctl start nginx
+              EOF
 
   tags = {
-    Name = "Jenkins-Terraform-EC2"
+    Name = "Terraform-Nginx-EC2"
   }
 }
