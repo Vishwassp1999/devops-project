@@ -80,7 +80,7 @@ resource "aws_instance" "nginx_server" {
               EOF
 
   tags = {
-    Name = "Terraform-Nginx-EC2"
+    Name = "Terraform-python-server"
   }
 }
 
