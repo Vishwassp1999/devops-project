@@ -1,0 +1,5 @@
+FROM python:3.9-slime
+WORKDIR /app
+COPY . /app
+RUN pip install --no-chache-dir -r requirments.txt
+CMD ["python", "data.py"]

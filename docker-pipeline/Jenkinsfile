@@ -1,0 +1,34 @@
+pipeline {
+    agent any
+
+    environment {
+        IMAGE_NAME = 'your-dockerhub-vishwas1999/practice-script:v1'
+    }
+
+    stages {
+        stage('Clone Repo') {
+            steps {
+                git 'https://github.com/Vishwassp1999/devops-project.git'
+            }
+        }
+
+        stage('Build & Push Docker Image') {
+            steps {
+                script {
+                    docker.withRegistry('', 'dockerhub-creds') {
+                        docker.build("${IMAGE_NAME}").push()
+                    }
+                }
+            }
+        }
+    }
+
+    post {
+        success {
+            echo '✅ Docker image built and pushed successfully!'
+        }
+        failure {
+            echo '❌ Docker build/push failed. Check logs.'
+        }
+    }
+}
