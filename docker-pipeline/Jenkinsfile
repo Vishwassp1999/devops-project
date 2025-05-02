@@ -6,12 +6,6 @@ pipeline {
     }
 
     stages {
-        stage('Clone Repo') {
-            steps {
-                git 'https://github.com/Vishwassp1999/devops-project.git'
-            }
-        }
-
         stage('Build & Push Docker Image') {
             steps {
                 script {
