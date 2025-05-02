@@ -2,13 +2,13 @@ pipeline {
     agent any
 
     environment {
-        IMAGE_NAME = 'your-dockerhub-vishwas1999/practice-script:v1'
+        IMAGE_NAME = 'vishwas1999/practice-script:v1'
     }
 
     stages {
         stage('Clone Repo') {
             steps {
-                git 'https://github.com/Vishwassp1999/devops-project/docker-pipeline.git'
+                git 'https://github.com/Vishwassp1999/devops-project.git'
             }
         }
 
@@ -16,7 +16,7 @@ pipeline {
             steps {
                 script {
                     docker.withRegistry('', 'dockerhub-creds') {
-                        docker.build("${IMAGE_NAME}").push()
+                        docker.build("${IMAGE_NAME}", "docker-pipeline").push()
                     }
                 }
             }
