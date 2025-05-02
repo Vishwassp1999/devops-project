@@ -8,7 +8,7 @@ pipeline {
     stages {
         stage('Clone Repo') {
             steps {
-                git 'https://github.com/Vishwassp1999/devops-project.git'
+                git 'https://github.com/Vishwassp1999/devops-project/docker-pipeline.git'
             }
         }
 
